@@ -1,22 +1,28 @@
 node {
-    stage('Checkout') {
+    stage('Clone Repository') {
         git branch: 'main', url: 'https://github.com/ariframadhan01/simple-python-pyinstaller-app.git'
     }
 
-    stage('Install Dependencies') {
-        sh 'pip install -r requirements.txt'
-    }
-
     stage('Build') {
-        sh 'pyinstaller --onefile main.py'
+        docker.image('python:3.9-slim').inside {
+            sh 'pip install -r requirements.txt'
+        }
     }
 
     stage('Test') {
-        sh 'pytest'
+        docker.image('python:3.9-slim').inside {
+            sh 'pytest tests/'
+        }
     }
 
-    stage('Deploy') {
-        sh 'echo "Deploying Python App..."'
+    stage('Package') {
+        docker.image('python:3.9-slim').inside {
+            sh 'pyinstaller --onefile main.py'
+        }
+    }
+
+    stage('Archive Artifact') {
+        archiveArtifacts artifacts: 'dist/main', fingerprint: true
     }
 }
 
